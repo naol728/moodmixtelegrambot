@@ -1,45 +1,31 @@
-require("dotenv").config();
 const express = require("express");
-const { Telegraf } = require("telegraf");
-const cors = require("cors");
+const axios = require("axios");
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const BOT_TOKEN = "7828776074:AAGmqjEHiY18vavdTxMp3ukSG8_iLiN6BJA";
+const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
 const app = express();
-
-app.use(cors());
 app.use(express.json());
 
-// 🟢 Start Command - Sends Website Link
-bot.command("start", (ctx) => {
-  ctx.reply("Welcome! Click below to visit our website 👇", {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Visit Website 🌐",
-            url: "https://moodmix-n5wxnupwe-naol728s-projects.vercel.app/",
-          },
+app.post("/webhook", async (req, res) => {
+  const { message } = req.body;
+  const chatId = message.chat.id;
+
+  if (message.text === "/start") {
+    const websiteURL =
+      "https://moodmix-n5wxnupwe-naol728s-projects.vercel.app/";
+
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
+      chat_id: chatId,
+      text: `Visit our website: ${websiteURL}`,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Open MoodMix 🎵", web_app: { url: websiteURL } }],
         ],
-      ],
-    },
-  });
-});
-
-// 🟢 Handle Messages
-bot.on("text", (ctx) => {
-  ctx.reply(`You said: ${ctx.message.text}`);
-});
-
-// 🟢 Webhook Endpoint (For Hosting)
-app.post(`/${process.env.BOT_TOKEN}`, (req, res) => {
-  bot.handleUpdate(req.body);
+      },
+    });
+  }
   res.sendStatus(200);
 });
 
-// Start Express Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Bot server running on port ${PORT}`);
-});
-
-bot.launch();
+app.listen(3000, () => console.log("Bot server running..."));
